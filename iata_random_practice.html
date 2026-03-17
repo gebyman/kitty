@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IATA</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, "Microsoft JhengHei", sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+    .app {
+      width: 100%;
+      max-width: 760px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      padding: 28px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .badge {
+      background: rgba(255,255,255,0.1);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 14px;
+    }
+    .question-box {
+      background: rgba(255,255,255,0.06);
+      border-radius: 20px;
+      padding: 28px;
+      margin: 18px 0;
+      text-align: center;
+    }
+    .country {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 10px;
+    }
+    .city {
+      font-size: 34px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+    .hint {
+      opacity: 0.75;
+      font-size: 14px;
+    }
+    .answer-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    input {
+      flex: 1;
+      min-width: 220px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: none;
+      outline: none;
+      font-size: 18px;
+      text-transform: uppercase;
+    }
+    button {
+      padding: 14px 18px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .primary { background: white; color: #0f172a; }
+    .secondary { background: rgba(255,255,255,0.14); color: white; }
+    .favorite-btn.active { background: gold; color: #111827; }
+    .result {
+      min-height: 34px;
+      margin-top: 14px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .correct { color: #4ade80; }
+    .wrong { color: #f87171; }
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .favorites-panel {
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.12);
+    }
+    .favorites-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .chip {
+      background: rgba(255,255,255,0.1);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+    .empty {
+      opacity: 0.7;
+      font-size: 14px;
+    }
+    @media (max-width: 640px) {
+      .city { font-size: 26px; }
+      .app { padding: 18px; }
+      button, input { width: 100%; }
+      .answer-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="badge" id="progress">題庫數量：0</div>
+      <img src="Adobe Express - file.png" alt="" style="width: 100px;">
+      <div class="badge" id="score">答對：0 / 0</div>
+      <img src="Adobe Express - file.png" alt="" style="width: 100px;">
+      <div class="badge" id="mode">模式：全部題目</div>
+    </div>
+
+    <div class="question-box">
+      <div class="country" id="country">國家</div>
+      <div class="city" id="city">題目載入中...</div>
+      <div class="hint">請輸入對應的 IATA 代碼</div>
+
+      <div class="answer-row">
+        <input id="answerInput" type="text" maxlength="3" placeholder="輸入 IATA，例如 DAD" />
+        <button class="primary" id="checkBtn">確認答案</button>
+      </div>
+
+      <div class="result" id="result"></div>
+
+      <div class="controls">
+        <button class="secondary" id="nextBtn">下一題</button>
+        <button class="secondary favorite-btn" id="favoriteBtn">☆ 加入不熟題目</button>
+        <button class="secondary" id="toggleModeBtn">只練不熟題目</button>
+      </div>
+    </div>
+
+    <div class="favorites-panel">
+      <strong>⭐ 不熟題目清單</strong>
+      <div class="favorites-list" id="favoritesList"></div>
+      <div class="empty" id="emptyText">目前還沒有加入不熟題目</div>
+    </div>
+  </div>
+
+  <script>
+    const data = [
+      { country: "VN", cityZh: "峴港", cityEn: "Da Nang", code: "DAD" },
+      { country: "VN", cityZh: "胡志明市", cityEn: "HoChiMinh City", code: "SGN" },
+      { country: "VN", cityZh: "河內", cityEn: "Hanoi", code: "HAN" },
+      { country: "VN", cityZh: "富國島", cityEn: "Phu Quoc", code: "PQC" },
+
+      { country: "PH", cityZh: "宿霧", cityEn: "Cebu", code: "CEB" },
+      { country: "PH", cityZh: "馬尼拉", cityEn: "Manila", code: "MNL" },
+      { country: "PH", cityZh: "克拉克", cityEn: "Clark", code: "CRK" },
+
+      { country: "MY", cityZh: "吉隆坡", cityEn: "Kuala Lumpur", code: "KUL" },
+
+      { country: "TH", cityZh: "曼谷", cityEn: "Bangkok", code: "BKK" },
+      { country: "TH", cityZh: "清邁", cityEn: "Chiang Mai", code: "CNX" },
+
+      { country: "ID", cityZh: "雅加達", cityEn: "Jakarta", code: "CGK" },
+
+      { country: "SG", cityZh: "新加坡", cityEn: "Singapore", code: "SIN" },
+
+      { country: "MO", cityZh: "澳門", cityEn: "Macao", code: "MFM" },
+
+      { country: "HK", cityZh: "香港", cityEn: "Hong Kong", code: "HKG" },
+
+      { country: "JP", cityZh: "東京成田", cityEn: "Tokyo", code: "NRT" },
+      { country: "JP", cityZh: "大阪關西", cityEn: "Osaka", code: "KIX" },
+      { country: "JP", cityZh: "福岡", cityEn: "Fukuoka", code: "FUK" },
+      { country: "JP", cityZh: "熊本", cityEn: "Kumamoto", code: "KMJ" },
+      { country: "JP", cityZh: "札幌", cityEn: "Sapporo", code: "CTS" },
+      { country: "JP", cityZh: "函館", cityEn: "Hakodate", code: "HKD" },
+      { country: "JP", cityZh: "仙台", cityEn: "Sendai", code: "SDJ" },
+      { country: "JP", cityZh: "沖繩", cityEn: "Okinawa", code: "OKA" },
+      { country: "JP", cityZh: "名古屋", cityEn: "Nagoya", code: "NGO" },
+      { country: "JP", cityZh: "神戶", cityEn: "Kobe", code: "UKB" },
+      { country: "JP", cityZh: "宮古下地島", cityEn: "Shimoji-jima", code: "SHI" },
+
+      { country: "KR", cityZh: "釜山", cityEn: "Busan", code: "PUS" },
+
+      { country: "US", cityZh: "洛杉磯", cityEn: "Los Angeles", code: "LAX" },
+      { country: "US", cityZh: "舊金山", cityEn: "San Francisco", code: "SFO" },
+      { country: "US", cityZh: "西雅圖", cityEn: "Seattle", code: "SEA" },
+      { country: "US", cityZh: "安大略", cityEn: "Ontario", code: "ONT" },
+      { country: "US", cityZh: "鳳凰城", cityEn: "Phoenix", code: "PHX" },
+
+      { country: "CZ", cityZh: "布拉格", cityEn: "Prague", code: "PRG" }
+    ];
+
+    let favorites = JSON.parse(localStorage.getItem("iata_favorites") || "[]");
+    let stats = JSON.parse(localStorage.getItem("iata_stats") || '{"correct":0,"total":0}');
+    let practiceFavoritesOnly = false;
+    let currentQuestion = null;
+
+    const countryEl = document.getElementById("country");
+    const cityEl = document.getElementById("city");
+    const answerInput = document.getElementById("answerInput");
+    const resultEl = document.getElementById("result");
+    const favoriteBtn = document.getElementById("favoriteBtn");
+    const favoritesList = document.getElementById("favoritesList");
+    const emptyText = document.getElementById("emptyText");
+    const progressEl = document.getElementById("progress");
+    const scoreEl = document.getElementById("score");
+    const modeEl = document.getElementById("mode");
+    const toggleModeBtn = document.getElementById("toggleModeBtn");
+
+    function saveFavorites() {
+      localStorage.setItem("iata_favorites", JSON.stringify(favorites));
+    }
+
+    function saveStats() {
+      localStorage.setItem("iata_stats", JSON.stringify(stats));
+    }
+
+    function getPool() {
+      if (practiceFavoritesOnly) {
+        return data.filter(item => favorites.includes(item.code));
+      }
+      return data;
+    }
+
+    function updateHeader() {
+      progressEl.textContent = "題庫數量：" + getPool().length;
+      scoreEl.textContent = "答對：" + stats.correct + " / " + stats.total;
+      modeEl.textContent = "模式：" + (practiceFavoritesOnly ? "只練不熟題目" : "全部題目");
+      toggleModeBtn.textContent = practiceFavoritesOnly ? "切回全部題目" : "只練不熟題目";
+    }
+
+    function renderFavorites() {
+      favoritesList.innerHTML = "";
+      const favoriteItems = data.filter(item => favorites.includes(item.code));
+
+      if (favoriteItems.length === 0) {
+        emptyText.style.display = "block";
+      } else {
+        emptyText.style.display = "none";
+        favoriteItems.forEach(item => {
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.textContent = item.cityZh + " " + item.cityEn + " (" + item.code + ")";
+          favoritesList.appendChild(chip);
+        });
+      }
+    }
+
+    function updateFavoriteButton() {
+      const isFav = currentQuestion && favorites.includes(currentQuestion.code);
+      favoriteBtn.textContent = isFav ? "⭐ 已加入不熟題目" : "☆ 加入不熟題目";
+      favoriteBtn.classList.toggle("active", !!isFav);
+    }
+
+    function nextQuestion() {
+      const pool = getPool();
+      if (pool.length === 0) {
+        currentQuestion = null;
+        countryEl.textContent = "無題目";
+        cityEl.textContent = "你目前還沒有加入任何不熟題目";
+        resultEl.innerHTML = "";
+        answerInput.value = "";
+        updateFavoriteButton();
+        updateHeader();
+        return;
+      }
+
+      let next = pool[Math.floor(Math.random() * pool.length)];
+      if (pool.length > 1 && currentQuestion && next.code === currentQuestion.code) {
+        while (next.code === currentQuestion.code) {
+          next = pool[Math.floor(Math.random() * pool.length)];
+        }
+      }
+
+      currentQuestion = next;
+      countryEl.textContent = "國家 / 地區：" + next.country;
+      cityEl.textContent = next.cityZh + " " + next.cityEn;
+      resultEl.innerHTML = "";
+      answerInput.value = "";
+      answerInput.focus();
+      updateFavoriteButton();
+      updateHeader();
+    }
+
+    function checkAnswer() {
+      if (!currentQuestion) return;
+      const value = answerInput.value.trim().toUpperCase();
+      if (!value) {
+        resultEl.innerHTML = "<span class='wrong'>請先輸入答案</span>";
+        return;
+      }
+
+      stats.total += 1;
+
+      if (value === currentQuestion.code) {
+        stats.correct += 1;
+        resultEl.innerHTML = "<span class='correct'>✔ 正確</span>";
+      } else {
+        resultEl.innerHTML = "<span class='wrong'>❌ 錯誤，正確答案是 " + currentQuestion.code + "</span>";
+      }
+
+      saveStats();
+      updateHeader();
+    }
+
+    function toggleFavorite() {
+      if (!currentQuestion) return;
+      const code = currentQuestion.code;
+      if (favorites.includes(code)) {
+        favorites = favorites.filter(item => item !== code);
+      } else {
+        favorites.push(code);
+      }
+      saveFavorites();
+      renderFavorites();
+      updateFavoriteButton();
+
+      if (practiceFavoritesOnly && !favorites.includes(code)) {
+        nextQuestion();
+      } else {
+        updateHeader();
+      }
+    }
+
+    document.getElementById("checkBtn").addEventListener("click", checkAnswer);
+    document.getElementById("nextBtn").addEventListener("click", nextQuestion);
+    favoriteBtn.addEventListener("click", toggleFavorite);
+    toggleModeBtn.addEventListener("click", () => {
+      practiceFavoritesOnly = !practiceFavoritesOnly;
+      nextQuestion();
+    });
+
+    answerInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") checkAnswer();
+    });
+
+    renderFavorites();
+    updateHeader();
+    nextQuestion();
+  </script>
+</body>
+</html>
