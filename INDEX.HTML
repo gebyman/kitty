@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>真實快捷鍵辨識器</title>
+  <title>kitty</title>
   <style>
     * {
       box-sizing: border-box;
@@ -23,7 +23,7 @@
 
     .container {
       width: 100%;
-      max-width: 900px;
+      max-width: 920px;
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 24px;
@@ -34,13 +34,14 @@
 
     h1 {
       text-align: center;
-      margin-bottom: 12px;
+      margin: 0 0 12px;
+      font-size: 36px;
     }
 
     .desc {
       text-align: center;
       color: #cbd5e1;
-      line-height: 1.7;
+      line-height: 1.8;
       margin-bottom: 24px;
     }
 
@@ -61,6 +62,7 @@
       font-size: 28px;
       font-weight: bold;
       word-break: break-word;
+      line-height: 1.4;
     }
 
     .result-ok {
@@ -69,6 +71,10 @@
 
     .result-fail {
       color: #fca5a5;
+    }
+
+    .result-wait {
+      color: #fcd34d;
     }
 
     .controls {
@@ -86,6 +92,7 @@
       color: white;
       cursor: pointer;
       font-size: 16px;
+      transition: 0.2s;
     }
 
     button:hover {
@@ -104,6 +111,21 @@
     .listen-box.active {
       border-color: #60a5fa;
       background: rgba(96,165,250,0.12);
+      box-shadow: 0 0 0 4px rgba(96,165,250,0.08);
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .status-dot.on {
+      background: #22c55e;
     }
 
     table {
@@ -131,8 +153,13 @@
     .hint {
       margin-top: 14px;
       color: #cbd5e1;
-      line-height: 1.7;
+      line-height: 1.8;
       font-size: 14px;
+    }
+
+    .warn {
+      margin-top: 10px;
+      color: #fca5a5;
     }
 
     @media (max-width: 640px) {
@@ -143,12 +170,17 @@
       .container {
         padding: 20px;
       }
+
+      h1 {
+        font-size: 28px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>真實快捷鍵辨識器</h1>
+    <h1>kitty</h1><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;"><img src="hellokitty.png" alt="" style="width: 50px;">
+
     <p class="desc">
       點擊下方區塊後，直接用鍵盤輸入真實快捷鍵序列。<br>
       例如先按 <b>Alt + F11</b>，再按 <b>F9</b>，系統會辨識為 <b>AF11&gt;F9</b>。
@@ -156,10 +188,14 @@
 
     <div id="listenBox" class="listen-box" tabindex="0">
       <div class="label">偵測區</div>
-      <div class="big-text">點我後開始按快捷鍵</div>
+      <div class="big-text">
+        <span id="statusDot" class="status-dot"></span>
+        <span id="listenState">點我後開始按快捷鍵</span>
+      </div>
     </div>
 
     <div class="controls">
+      <button id="toggleBtn">開始偵測</button>
       <button id="clearBtn">清除目前序列</button>
       <button id="finishBtn">完成比對</button>
     </div>
@@ -187,8 +223,10 @@
     <div class="hint">
       規則：<br>
       A = Alt、C = Ctrl、S = Shift<br>
-      AF11 = Alt + F11、CF4 = Ctrl + F4、SF4 = Shift + F4<br><br>
-      提醒：某些快捷鍵可能會被瀏覽器或系統攔截，所以不是每一組都一定能抓到。
+      AF11 = Alt + F11、CF4 = Ctrl + F4、SF4 = Shift + F4
+      <div class="warn">
+        注意：像 <b>Ctrl + F4</b>、<b>Alt + F4</b> 這種系統/瀏覽器快捷鍵，網頁只能盡量攔截，不能保證百分之百阻止。
+      </div>
     </div>
   </div>
 
@@ -219,7 +257,7 @@
       ["View History", "F7>CF4>SF3"],
       ["Add or Amend Travel Document", "CF8>CF8"],
       ["Display Baggage", "AF3>F9"],
-      ["Cancel Acceptance", "F6 or AF12>F6"]
+      ["Cancel Acceptance", "F6 / AF12>F6"]
     ];
 
     const listenBox = document.getElementById("listenBox");
@@ -227,10 +265,14 @@
     const resultText = document.getElementById("resultText");
     const clearBtn = document.getElementById("clearBtn");
     const finishBtn = document.getElementById("finishBtn");
+    const toggleBtn = document.getElementById("toggleBtn");
     const tableBody = document.getElementById("tableBody");
+    const listenState = document.getElementById("listenState");
+    const statusDot = document.getElementById("statusDot");
 
     let sequence = [];
     let lastKeyTime = 0;
+    let isListening = false;
 
     function renderTable() {
       tableBody.innerHTML = tableData.map(([name, key]) => `
@@ -246,7 +288,24 @@
     }
 
     function updateSequenceUI() {
-      sequenceText.textContent = sequence.length ? sequence.join(" > ") : "尚未輸入";
+      sequenceText.textContent = sequence.length ? sequence.join(">") : "尚未輸入";
+    }
+
+    function setListening(state) {
+      isListening = state;
+
+      if (isListening) {
+        listenBox.classList.add("active");
+        statusDot.classList.add("on");
+        listenState.textContent = "偵測中，請直接按快捷鍵";
+        toggleBtn.textContent = "停止偵測";
+        listenBox.focus();
+      } else {
+        listenBox.classList.remove("active");
+        statusDot.classList.remove("on");
+        listenState.textContent = "點我後開始按快捷鍵";
+        toggleBtn.textContent = "開始偵測";
+      }
     }
 
     function clearSequence() {
@@ -265,9 +324,9 @@
         resultText.className = "big-text result-ok";
       } else if (sequence.length === 0) {
         resultText.textContent = "請先輸入快捷鍵";
-        resultText.className = "big-text";
+        resultText.className = "big-text result-wait";
       } else {
-        resultText.textContent = "查無對應名稱";
+        resultText.textContent = `查無對應名稱：${key}`;
         resultText.className = "big-text result-fail";
       }
     }
@@ -275,7 +334,6 @@
     function getStepFromEvent(e) {
       const key = e.key;
 
-      // 忽略單獨按修飾鍵
       if (key === "Shift" || key === "Control" || key === "Alt" || key === "Meta") {
         return null;
       }
@@ -284,6 +342,10 @@
 
       if (/^F\d{1,2}$/i.test(key)) {
         baseKey = key.toUpperCase();
+      } else if (key === " ") {
+        baseKey = "SPACE";
+      } else if (key === "Escape") {
+        baseKey = "ESC";
       } else if (key.length === 1) {
         baseKey = key.toUpperCase();
       } else {
@@ -298,26 +360,22 @@
       return `${prefix}${baseKey}`;
     }
 
-    listenBox.addEventListener("focus", () => {
-      listenBox.classList.add("active");
-    });
+    function handleKeydown(e) {
+      if (!isListening) return;
 
-    listenBox.addEventListener("blur", () => {
-      listenBox.classList.remove("active");
-    });
-
-    listenBox.addEventListener("keydown", (e) => {
+      // 盡量攔截常見快捷鍵
+      // 但系統/瀏覽器層級快捷鍵仍不保證全部可阻止
       e.preventDefault();
+      e.stopPropagation();
 
-      const now = Date.now();
-      const step = getStepFromEvent(e);
-
-      if (!step) return;
-
-      // 避免長按重複輸入同一鍵
       if (e.repeat) return;
 
-      // 可依需求設定：超過 3 秒視為新一輪
+      const step = getStepFromEvent(e);
+      if (!step) return;
+
+      const now = Date.now();
+
+      // 超過 3 秒，視為新的一輪
       if (now - lastKeyTime > 3000) {
         sequence = [];
       }
@@ -325,12 +383,46 @@
       lastKeyTime = now;
       sequence.push(step);
       updateSequenceUI();
+
+      // 即時比對
+      const key = sequence.map(normalizeStep).join(">");
+      if (shortcutMap[key]) {
+        resultText.textContent = shortcutMap[key];
+        resultText.className = "big-text result-ok";
+      } else {
+        resultText.textContent = "輸入中...";
+        resultText.className = "big-text result-wait";
+      }
+    }
+
+    listenBox.addEventListener("click", () => {
+      setListening(true);
+    });
+
+    listenBox.addEventListener("focus", () => {
+      if (isListening) {
+        listenBox.classList.add("active");
+      }
+    });
+
+    listenBox.addEventListener("blur", () => {
+      if (!isListening) {
+        listenBox.classList.remove("active");
+      }
+    });
+
+    toggleBtn.addEventListener("click", () => {
+      setListening(!isListening);
     });
 
     clearBtn.addEventListener("click", clearSequence);
     finishBtn.addEventListener("click", finishMatch);
 
+    // 用 capture 階段盡量先攔
+    window.addEventListener("keydown", handleKeydown, true);
+
     renderTable();
+    updateSequenceUI();
   </script>
 </body>
 </html>
