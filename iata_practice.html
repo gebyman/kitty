@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IATA 航空公司代碼</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: rgba(255,255,255,0.08);
+      --line: rgba(255,255,255,0.14);
+      --text: #e5eefc;
+      --muted: #a9b7d0;
+      --accent: #60a5fa;
+      --accent2: #34d399;
+      --danger: #fb7185;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(96,165,250,.25), transparent 25%),
+        radial-gradient(circle at bottom left, rgba(52,211,153,.18), transparent 25%),
+        linear-gradient(135deg, #0b1220, var(--bg));
+      color: var(--text);
+      padding: 24px;
+    }
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.4fr .9fr;
+      gap: 20px;
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 40px rgba(0,0,0,.25);
+      padding: 22px;
+    }
+    h1,h2,h3,p { margin: 0; }
+    .title {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .subtitle { color: var(--muted); line-height: 1.6; margin-bottom: 18px; }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .control-box, .question-box, .stats, .list-box {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    select, input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(15,23,42,.75);
+      color: #fff;
+      outline: none;
+      font-size: 16px;
+    }
+    input[type="text"]:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(96,165,250,.15);
+    }
+    .question-box {
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .qtype {
+      color: var(--accent2);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: .5px;
+    }
+    .question {
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-top: 10px;
+    }
+    .hint {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .answer-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+      flex-wrap: wrap;
+    }
+    .answer-row input { flex: 1; min-width: 220px; }
+    button {
+      border: 0;
+      cursor: pointer;
+      border-radius: 14px;
+      padding: 13px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      background: rgba(255,255,255,.09);
+      border: 1px solid var(--line);
+      transition: .2s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    .primary { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+    .success { background: linear-gradient(135deg, #059669, #10b981); }
+    .danger { background: linear-gradient(135deg, #e11d48, #fb7185); }
+    .warning { background: linear-gradient(135deg, #b45309, #f59e0b); }
+    .ghost { background: rgba(255,255,255,.05); }
+    .message {
+      min-height: 26px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .ok { color: #86efac; }
+    .bad { color: #fda4af; }
+    .mid { color: #fde68a; }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .stat {
+      padding: 12px;
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .stat .num { font-size: 26px; font-weight: 800; }
+    .stat .txt { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .side-title { font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+    .list-box { margin-bottom: 14px; }
+    .item-list {
+      max-height: 260px;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+    }
+    .item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .item small { display:block; color: var(--muted); margin-top: 4px; }
+    .tiny-btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+    .footer-note { color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .answer-box {
+      margin-top: 10px;
+      color: #bfdbfe;
+      font-weight: 700;
+      min-height: 22px;
+    }
+    @media (max-width: 920px) {
+      .app { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      body { padding: 14px; }
+      .controls { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .question { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel">
+      <h1 class="title">IATA 航空公司代碼</h1>
+      <p class="subtitle">
+        已依照 <b>Country</b> 分類。預設題型為「航空公司名稱 + ICAO → 請回答 IATA」。<br>
+        例如：<b>星宇（SJX）</b>，答案是 <b>JX</b>。
+      </p>
+
+      <div class="controls">
+        <div class="control-box">
+          <label for="countryFilter">選擇國家 / 地區</label>
+          <select id="countryFilter"></select>
+        </div>
+        <div class="control-box">
+          <label for="modeSelect">出題模式</label>
+          <select id="modeSelect">
+            <option value="all">全部題目隨機</option>
+            <option value="weak">只練不熟題</option>
+            <option value="favorites">只練收藏題</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="question-box">
+        <div>
+          <div class="badge-row">
+            <span class="badge" id="countryBadge">Country：-</span>
+            <span class="badge" id="progressBadge">第 0 / 0 題</span>
+          </div>
+          <div class="qtype">請輸入 IATA 代碼</div>
+          <div class="question" id="questionText">按「開始練習」開始</div>
+          <p class="hint" id="questionHint">題目格式：航空公司（ICAO）</p>
+        </div>
+
+        <div>
+          <div class="answer-row">
+            <input id="answerInput" type="text" placeholder="輸入答案，例如 JX" maxlength="3" autocomplete="off" />
+            <button class="primary" id="submitBtn">送出答案</button>
+            <button class="ghost" id="nextBtn">跳下一題</button>
+          </div>
+          <div class="message" id="message"></div>
+          <div class="answer-box" id="revealBox"></div>
+          <div class="btn-row" style="margin-top: 12px;">
+            <button class="warning" id="showAnswerBtn">顯示答案</button>
+            <button class="danger" id="weakBtn">加入不熟</button>
+            <button class="success" id="favoriteBtn">加入收藏</button>
+            <button class="ghost" id="startBtn">開始練習</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="num" id="totalCount">0</div><div class="txt">目前題庫數</div></div>
+        <div class="stat"><div class="num" id="correctCount">0</div><div class="txt">本次答對</div></div>
+        <div class="stat"><div class="num" id="wrongCount">0</div><div class="txt">本次答錯</div></div>
+        <div class="stat"><div class="num" id="weakCount">0</div><div class="txt">不熟題數</div></div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="list-box">
+        <h2 class="side-title">不熟題複習區</h2>
+        <div class="item-list" id="weakList"></div>
+      </div>
+
+      <div class="list-box">
+        <h2 class="side-title">收藏題目</h2>
+        <div class="item-list" id="favoriteList"></div>
+      </div>
+
+      <p class="footer-note">
+        功能說明：<br>
+        1. 答對後會自動跳下一題。<br>
+        2. 答錯會直接顯示正確答案，並提高該題的不熟次數。<br>
+        3. 「不熟題」與「收藏題」都會儲存在瀏覽器，下次打開還在。<br>
+        4. 可從右側清單直接點擊任一題，馬上針對該題複習。
+      </p>
+    </aside>
+  </div>
+
+  <script>
+    const questionBank = [
+      { country: 'TW', airline: '星宇', iata: 'JX', icao: 'SJX', callsign: '' },
+      { country: 'TW', airline: '中華', iata: 'CI', icao: 'CAL', callsign: 'Dynasty' },
+      { country: 'TW', airline: '華信', iata: 'AE', icao: 'MDA', callsign: 'Mandarin' },
+      { country: 'TW', airline: '台虎', iata: 'IT', icao: 'TTW', callsign: 'Smart Cat' },
+      { country: 'TW', airline: '長榮', iata: 'BR', icao: 'EVA', callsign: 'Eva' },
+      { country: 'TW', airline: '立榮', iata: 'B7', icao: 'UIA', callsign: 'Glory' },
+
+      { country: 'HK', airline: '國泰', iata: 'CX', icao: 'CPA', callsign: 'Cathay' },
+      { country: 'HK', airline: '香港', iata: 'HX', icao: 'CRK', callsign: 'Bauhinia' },
+      { country: 'MO', airline: '澳門', iata: 'NX', icao: 'AMU', callsign: 'AirMacao' },
+      { country: 'NL', airline: '荷蘭皇家', iata: 'KL', icao: 'KLM', callsign: 'KLM' },
+      { country: 'FR', airline: '法國', iata: 'AF', icao: 'AFR', callsign: 'AirFrance' },
+      { country: 'TR', airline: '土耳其', iata: 'TK', icao: 'THY', callsign: 'Turkish' },
+      { country: 'AE', airline: '阿聯酋', iata: 'EK', icao: 'UAE', callsign: 'Emirates' },
+      { country: 'AE', airline: '阿提哈德', iata: 'EY', icao: 'ETD', callsign: 'ETIHAD' },
+      { country: 'QA', airline: '卡達', iata: 'QR', icao: 'QTR', callsign: 'QATARI' },
+      { country: 'US', airline: '阿拉斯加', iata: 'AS', icao: 'ASA', callsign: 'Alaska' },
+      { country: 'US', airline: '美國航空', iata: 'AA', icao: 'AAL', callsign: 'AMERICAN' },
+      { country: 'CA', airline: '加拿大', iata: 'AC', icao: 'ACA', callsign: 'Air Canada' },
+      { country: 'NZ', airline: '紐西蘭', iata: 'NZ', icao: 'ANZ', callsign: 'New Zealand' },
+      { country: 'RU', airline: '西伯利亞', iata: 'S7', icao: 'SBI', callsign: 'Siberian Airlines' },
+      { country: 'RU', airline: '俄羅斯皇家', iata: 'RL', icao: 'ABG', callsign: 'Abakan' },
+      { country: 'BN', airline: '汶萊皇家', iata: 'BI', icao: 'RBA', callsign: 'Brunei' },
+
+      { country: 'JP', airline: '全日空', iata: 'NH', icao: 'ANA', callsign: 'All Nippon' },
+      { country: 'JP', airline: '日本', iata: 'JL', icao: 'JAL', callsign: 'Japan Air' },
+      { country: 'JP', airline: '星悅', iata: '7G', icao: 'SFJ', callsign: 'Starflyer' },
+      { country: 'JP', airline: '樂桃', iata: 'MM', icao: 'APJ', callsign: 'Air Peach' },
+      { country: 'JP', airline: '捷星', iata: 'GK', icao: 'JJP', callsign: 'Orange Liner' },
+
+      { country: 'KR', airline: '韓亞', iata: 'OZ', icao: 'AAR', callsign: 'Asiana' },
+      { country: 'KR', airline: '大韓', iata: 'KE', icao: 'KAL', callsign: 'Korean Air' },
+      { country: 'KR', airline: '濟州', iata: '7C', icao: 'JJA', callsign: 'Jeju Air' },
+      { country: 'KR', airline: '真航空', iata: 'LJ', icao: 'JNA', callsign: 'Jin Air' },
+      { country: 'KR', airline: '釜山', iata: 'BX', icao: 'ABL', callsign: 'Air Busan' },
+      { country: 'KR', airline: '德威', iata: 'TW', icao: 'TWB', callsign: 'Tway Air' },
+      { country: 'KR', airline: '易斯達', iata: 'ZE', icao: 'ESR', callsign: 'Eastar Jet' },
+
+      { country: 'SG', airline: '新加坡', iata: 'SQ', icao: 'SIA', callsign: 'Singapore' },
+      { country: 'SG', airline: '酷航', iata: 'TR', icao: 'TGW', callsign: 'Scooter' },
+
+      { country: 'MY', airline: '馬來西亞', iata: 'MH', icao: 'MAS', callsign: 'Malaysian' },
+      { country: 'MY', airline: '全亞州', iata: 'D7', icao: 'XAX', callsign: 'Xanadu' },
+      { country: 'MY', airline: '亞洲', iata: 'AK', icao: 'AXM', callsign: 'Red Cap' },
+      { country: 'MY', airline: '馬印', iata: 'OD', icao: 'MXD', callsign: 'Malindo Express' },
+
+      { country: 'KH', airline: '柬埔寨景成', iata: 'QD', icao: 'JCC', callsign: 'Cambo' },
+
+      { country: 'VN', airline: '越南', iata: 'VN', icao: 'HVN', callsign: 'Viet Nam' },
+      { country: 'VN', airline: '越捷', iata: 'VJ', icao: 'VJC', callsign: 'VietJet' },
+      { country: 'VN', airline: '越南太平洋', iata: 'BL', icao: 'PIC', callsign: 'Pacific' },
+      { country: 'VN', airline: '越竹', iata: 'QH', icao: 'BAV', callsign: 'Bamboo' },
+
+      { country: 'PH', airline: '菲律賓', iata: 'PR', icao: 'PAL', callsign: 'Philippine' },
+      { country: 'PH', airline: '宿霧太平洋', iata: '5J', icao: 'CEB', callsign: 'Cebu' },
+      { country: 'PH', airline: '菲律賓亞航', iata: 'Z2', icao: 'APG', callsign: 'Cool Red' },
+
+      { country: 'TH', airline: '泰國亞洲', iata: 'FD', icao: 'AIQ', callsign: 'Thai AirAsia' },
+      { country: 'TH', airline: '酷鳥', iata: 'XW', icao: 'NCT', callsign: 'Big Bird' },
+      { country: 'TH', airline: '泰國獅子', iata: 'SL', icao: 'TLM', callsign: 'Mentari' },
+
+      { country: 'CN', airline: '人民國際', iata: '3D', icao: 'APG', callsign: 'Air People' },
+      { country: 'CN', airline: '廈門', iata: 'MF', icao: 'CXA', callsign: 'Xiamen Air' },
+      { country: 'CN', airline: '中國南方', iata: 'CZ', icao: 'CSN', callsign: 'China Southern' },
+      { country: 'CN', airline: '海南', iata: 'HU', icao: 'CHH', callsign: 'Hainan' },
+      { country: 'CN', airline: '中國國際', iata: 'CA', icao: 'CCA', callsign: 'Air China' },
+      { country: 'CN', airline: '中國東方', iata: 'MU', icao: 'CES', callsign: 'China Eastern' },
+      { country: 'CN', airline: '山東', iata: 'SC', icao: 'CDG', callsign: 'Shandong' },
+      { country: 'CN', airline: '吉祥', iata: 'HO', icao: 'DKH', callsign: 'Juneyao' },
+      { country: 'CN', airline: '河北', iata: 'NS', icao: 'HBH', callsign: 'Hebei Air' },
+      { country: 'CN', airline: '春秋', iata: '9C', icao: 'CQH', callsign: 'Air Spring' },
+      { country: 'CN', airline: '四川', iata: '3U', icao: 'CSC', callsign: 'Sichuan Air' },
+
+      { country: 'AU', airline: '澳洲', iata: 'QF', icao: 'QFA', callsign: 'QANTAS' },
+      { country: 'IN', airline: '印度', iata: 'AI', icao: 'AIC', callsign: 'AIRINDIA' },
+      { country: 'ID', airline: '嘉魯達印尼', iata: 'GA', icao: 'GIA', callsign: 'INDONESIA' }
+    ].map((item, index) => ({ ...item, id: `${item.country}-${item.iata}-${index}` }));
+
+    const els = {
+      countryFilter: document.getElementById('countryFilter'),
+      modeSelect: document.getElementById('modeSelect'),
+      questionText: document.getElementById('questionText'),
+      questionHint: document.getElementById('questionHint'),
+      countryBadge: document.getElementById('countryBadge'),
+      progressBadge: document.getElementById('progressBadge'),
+      answerInput: document.getElementById('answerInput'),
+      submitBtn: document.getElementById('submitBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      startBtn: document.getElementById('startBtn'),
+      showAnswerBtn: document.getElementById('showAnswerBtn'),
+      weakBtn: document.getElementById('weakBtn'),
+      favoriteBtn: document.getElementById('favoriteBtn'),
+      message: document.getElementById('message'),
+      revealBox: document.getElementById('revealBox'),
+      totalCount: document.getElementById('totalCount'),
+      correctCount: document.getElementById('correctCount'),
+      wrongCount: document.getElementById('wrongCount'),
+      weakCount: document.getElementById('weakCount'),
+      weakList: document.getElementById('weakList'),
+      favoriteList: document.getElementById('favoriteList')
+    };
+
+    const store = {
+      weak: JSON.parse(localStorage.getItem('iata-weak-map') || '{}'),
+      favorites: JSON.parse(localStorage.getItem('iata-favorites') || '[]')
+    };
+
+    let currentPool = [];
+    let currentQuestion = null;
+    let answeredCount = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+
+    function saveStore() {
+      localStorage.setItem('iata-weak-map', JSON.stringify(store.weak));
+      localStorage.setItem('iata-favorites', JSON.stringify(store.favorites));
+    }
+
+    function normalize(text) {
+      return (text || '').trim().toUpperCase();
+    }
+
+    function getCountries() {
+      return [...new Set(questionBank.map(q => q.country))].sort();
+    }
+
+    function populateCountryFilter() {
+      els.countryFilter.innerHTML = '<option value="ALL">全部國家 / 地區</option>' +
+        getCountries().map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    function getFilteredBase() {
+      const country = els.countryFilter.value;
+      let base = country === 'ALL' ? [...questionBank] : questionBank.filter(q => q.country === country);
+      const mode = els.modeSelect.value;
+      if (mode === 'weak') {
+        base = base.filter(q => (store.weak[q.id] || 0) > 0);
+      } else if (mode === 'favorites') {
+        base = base.filter(q => store.favorites.includes(q.id));
+      }
+      return base;
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function rebuildPool() {
+      currentPool = shuffle(getFilteredBase());
+      answeredCount = 0;
+      updateStats();
+    }
+
+    function updateStats() {
+      const base = getFilteredBase();
+      els.totalCount.textContent = base.length;
+      els.correctCount.textContent = correctCount;
+      els.wrongCount.textContent = wrongCount;
+      els.weakCount.textContent = Object.values(store.weak).filter(v => v > 0).length;
+      els.progressBadge.textContent = `第 ${Math.min(answeredCount + 1, Math.max(base.length, 1))} / ${base.length} 題`;
+    }
+
+    function pickNextQuestion() {
+      if (!currentPool.length) currentPool = shuffle(getFilteredBase());
+      if (!currentPool.length) {
+        currentQuestion = null;
+        els.questionText.textContent = '目前沒有符合條件的題目';
+        els.questionHint.textContent = '請切換國家、模式，或先加入一些不熟題 / 收藏題。';
+        els.countryBadge.textContent = 'Country：-';
+        els.message.textContent = '';
+        els.revealBox.textContent = '';
+        updateStats();
+        return;
+      }
+      currentQuestion = currentPool.pop();
+      els.questionText.textContent = `${currentQuestion.airline}（${currentQuestion.icao}）`;
+      els.questionHint.textContent = `請輸入 ${currentQuestion.airline} 的 IATA 代碼`;
+      els.countryBadge.textContent = `Country：${currentQuestion.country}`;
+      els.answerInput.value = '';
+      els.answerInput.focus();
+      els.message.textContent = '';
+      els.message.className = 'message';
+      els.revealBox.textContent = '';
+      updateStats();
+      syncButtons();
+    }
+
+    function markWeak(id, amount = 1) {
+      store.weak[id] = (store.weak[id] || 0) + amount;
+      saveStore();
+      renderSideLists();
+      updateStats();
+    }
+
+    function reduceWeak(id) {
+      if (!store.weak[id]) return;
+      store.weak[id] = Math.max(0, store.weak[id] - 1);
+      if (store.weak[id] === 0) delete store.weak[id];
+      saveStore();
+      renderSideLists();
+      updateStats();
+    }
+
+    function toggleFavorite(id) {
+      const idx = store.favorites.indexOf(id);
+      if (idx >= 0) store.favorites.splice(idx, 1);
+      else store.favorites.push(id);
+      saveStore();
+      renderSideLists();
+      syncButtons();
+    }
+
+    function syncButtons() {
+      if (!currentQuestion) return;
+      const favorited = store.favorites.includes(currentQuestion.id);
+      els.favoriteBtn.textContent = favorited ? '取消收藏' : '加入收藏';
+      const weaked = !!store.weak[currentQuestion.id];
+      els.weakBtn.textContent = weaked ? '再記一次不熟' : '加入不熟';
+    }
+
+    function showAnswer(extra = '') {
+      if (!currentQuestion) return;
+      els.revealBox.textContent = `答案：${currentQuestion.iata}${extra ? '｜' + extra : ''}`;
+    }
+
+    function submitAnswer() {
+      if (!currentQuestion) return;
+      const userAns = normalize(els.answerInput.value);
+      const correctAns = normalize(currentQuestion.iata);
+      if (!userAns) {
+        els.message.textContent = '請先輸入答案';
+        els.message.className = 'message mid';
+        return;
+      }
+
+      answeredCount += 1;
+      if (userAns === correctAns) {
+        correctCount += 1;
+        els.message.textContent = `答對了！${currentQuestion.airline} 的 IATA 是 ${correctAns}`;
+        els.message.className = 'message ok';
+        reduceWeak(currentQuestion.id);
+        setTimeout(() => pickNextQuestion(), 650);
+      } else {
+        wrongCount += 1;
+        els.message.textContent = `答錯了，你輸入 ${userAns}`;
+        els.message.className = 'message bad';
+        markWeak(currentQuestion.id, 1);
+        showAnswer(`ICAO：${currentQuestion.icao}`);
+      }
+      updateStats();
+    }
+
+    function renderSideLists() {
+      const weakEntries = questionBank
+        .filter(q => store.weak[q.id])
+        .sort((a, b) => (store.weak[b.id] || 0) - (store.weak[a.id] || 0));
+      const favoriteEntries = questionBank.filter(q => store.favorites.includes(q.id));
+
+      els.weakList.innerHTML = weakEntries.length ? weakEntries.map(q => `
+        <div class="item">
+          <div>
+            <div><b>${q.airline}</b>（${q.icao}）</div>
+            <small>${q.country}｜答案：${q.iata}｜不熟次數：${store.weak[q.id]}</small>
+          </div>
+          <button class="tiny-btn warning" onclick="reviewSpecific('${q.id}')">複習</button>
+        </div>
+      `).join('') : '<div class="item"><div>目前沒有不熟題</div></div>';
+
+      els.favoriteList.innerHTML = favoriteEntries.length ? favoriteEntries.map(q => `
+        <div class="item">
+          <div>
+            <div><b>${q.airline}</b>（${q.icao}）</div>
+            <small>${q.country}｜答案：${q.iata}</small>
+          </div>
+          <button class="tiny-btn success" onclick="reviewSpecific('${q.id}')">複習</button>
+        </div>
+      `).join('') : '<div class="item"><div>目前沒有收藏題</div></div>';
+    }
+
+    window.reviewSpecific = function(id) {
+      const found = questionBank.find(q => q.id === id);
+      if (!found) return;
+      currentQuestion = found;
+      els.questionText.textContent = `${found.airline}（${found.icao}）`;
+      els.questionHint.textContent = `複習模式：請輸入 ${found.airline} 的 IATA 代碼`;
+      els.countryBadge.textContent = `Country：${found.country}`;
+      els.answerInput.value = '';
+      els.answerInput.focus();
+      els.message.textContent = '已切換到指定複習題';
+      els.message.className = 'message mid';
+      els.revealBox.textContent = '';
+      syncButtons();
+    }
+
+    els.startBtn.addEventListener('click', () => {
+      rebuildPool();
+      pickNextQuestion();
+    });
+    els.submitBtn.addEventListener('click', submitAnswer);
+    els.nextBtn.addEventListener('click', () => {
+      if (currentQuestion) answeredCount += 1;
+      pickNextQuestion();
+    });
+    els.showAnswerBtn.addEventListener('click', () => showAnswer(`ICAO：${currentQuestion?.icao || '-'}`));
+    els.weakBtn.addEventListener('click', () => {
+      if (!currentQuestion) return;
+      markWeak(currentQuestion.id, 1);
+      els.message.textContent = '已加入不熟題';
+      els.message.className = 'message mid';
+      syncButtons();
+    });
+    els.favoriteBtn.addEventListener('click', () => {
+      if (!currentQuestion) return;
+      toggleFavorite(currentQuestion.id);
+      els.message.textContent = store.favorites.includes(currentQuestion.id) ? '已加入收藏' : '已取消收藏';
+      els.message.className = 'message mid';
+    });
+    els.countryFilter.addEventListener('change', () => {
+      rebuildPool();
+      pickNextQuestion();
+    });
+    els.modeSelect.addEventListener('change', () => {
+      rebuildPool();
+      pickNextQuestion();
+    });
+    els.answerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitAnswer();
+    });
+
+    populateCountryFilter();
+    renderSideLists();
+    rebuildPool();
+    updateStats();
+  </script>
+</body>
+</html>
