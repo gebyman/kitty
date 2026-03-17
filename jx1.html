@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JX 航點</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      min-height: 100vh;
+      color: #fff;
+      padding: 24px;
+    }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .title {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .title h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .title p {
+      margin: 0;
+      color: #cbd5e1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+    }
+
+    .question-box {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .label {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .question {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag {
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      font-size: 14px;
+      color: #e2e8f0;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.08);
+      color: white;
+      outline: none;
+      font-size: 18px;
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 700;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .primary { background: #22c55e; color: #062b14; }
+    .secondary { background: #38bdf8; color: #082f49; }
+    .warn { background: #f59e0b; color: #3b2500; }
+    .danger { background: #f87171; color: #450a0a; }
+    .dark { background: #cbd5e1; color: #0f172a; }
+
+    .result {
+      min-height: 60px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.06);
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    .result.success {
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.15);
+    }
+
+    .result.error {
+      border: 1px solid rgba(248, 113, 113, 0.5);
+      background: rgba(248, 113, 113, 0.15);
+    }
+
+    .side h2 {
+      margin-top: 0;
+      font-size: 22px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .stat-box {
+      background: rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .stat-box .num {
+      font-size: 28px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .list-box {
+      max-height: 400px;
+      overflow: auto;
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .list-item {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .list-item small {
+      color: #94a3b8;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .mini-btn {
+      padding: 8px 10px;
+      font-size: 13px;
+      border-radius: 10px;
+    }
+
+    .top-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .question {
+        font-size: 38px;
+      }
+
+      .top-controls {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="title">
+      <h1>JX 航點</h1>
+      <p>輸入航班號碼對應的 Route，並可收藏不熟題目反覆練習</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="question-box">
+          <div class="top-controls">
+            <div>
+              <label class="label">題庫模式</label>
+              <select id="modeSelect">
+                <option value="all">全部題庫</option>
+                <option value="weak">只練不熟題目</option>
+              </select>
+            </div>
+            <div>
+              <label class="label">地區篩選</label>
+              <select id="regionSelect">
+                <option value="all">全部地區</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <div class="label">目前題目</div>
+            <div class="question" id="questionText">JX703</div>
+          </div>
+
+          <div class="meta">
+            <div class="tag">地區：<span id="regionText">VN</span></div>
+            <div class="tag">方向：<span id="directionText">TPE-DAD</span> <span style="opacity:.5;">(答案預設隱藏)</span></div>
+          </div>
+
+          <div>
+            <label class="label">請輸入 Route</label>
+            <div class="answer-row">
+              <input
+                type="text"
+                id="answerInput"
+                placeholder="例如：TPE-DAD"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="primary" id="checkBtn">檢查答案</button>
+            <button class="secondary" id="nextBtn">下一題</button>
+            <button class="dark" id="randomBtn">隨機出題</button>
+            <button class="warn" id="showBtn">顯示答案</button>
+            <button class="danger" id="addWeakBtn">加入不熟題庫</button>
+          </div>
+
+          <div class="result" id="resultBox">開始練習吧。</div>
+        </div>
+      </div>
+
+      <div class="card side">
+        <h2>練習資訊</h2>
+
+        <div class="stats">
+          <div class="stat-box">
+            <div>全部題數</div>
+            <div class="num" id="totalCount">0</div>
+          </div>
+          <div class="stat-box">
+            <div>不熟題數</div>
+            <div class="num" id="weakCount">0</div>
+          </div>
+          <div class="stat-box">
+            <div>答對</div>
+            <div class="num" id="correctCount">0</div>
+          </div>
+          <div class="stat-box">
+            <div>答錯</div>
+            <div class="num" id="wrongCount">0</div>
+          </div>
+        </div>
+
+        <div class="btn-group" style="margin-bottom:16px;">
+          <button class="dark" id="clearStatsBtn">清除成績</button>
+          <button class="danger" id="clearWeakBtn">清空不熟題庫</button>
+        </div>
+
+        <h2>不熟題目收藏區</h2>
+        <div class="list-box" id="weakList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionBank = [
+      // VN
+      { flight: "JX703", route: "TPE-DAD", region: "VN" },
+      { flight: "JX704", route: "DAD-TPE", region: "VN" },
+      { flight: "JX711", route: "TPE-SGN", region: "VN" },
+      { flight: "JX713", route: "TPE-SGN", region: "VN" },
+      { flight: "JX712", route: "SGN-TPE", region: "VN" },
+      { flight: "JX714", route: "SGN-TPE", region: "VN" },
+      { flight: "JX715", route: "TPE-HAN", region: "VN" },
+      { flight: "JX717", route: "TPE-HAN", region: "VN" },
+      { flight: "JX716", route: "HAN-TPE", region: "VN" },
+      { flight: "JX718", route: "HAN-TPE", region: "VN" },
+      { flight: "JX705", route: "TPE-PQC", region: "VN" },
+      { flight: "JX706", route: "PQC-TPE", region: "VN" },
+
+      // PH
+      { flight: "JX781", route: "TPE-CEB", region: "PH" },
+      { flight: "JX783", route: "TPE-CEB", region: "PH" },
+      { flight: "JX782", route: "CEB-TPE", region: "PH" },
+      { flight: "JX784", route: "CEB-TPE", region: "PH" },
+      { flight: "JX785", route: "TPE-MNL", region: "PH" },
+      { flight: "JX786", route: "MNL-TPE", region: "PH" },
+      { flight: "JX789", route: "TPE-CRK", region: "PH" },
+      { flight: "JX791", route: "TPE-CRK", region: "PH" },
+      { flight: "JX790", route: "CRK-TPE", region: "PH" },
+      { flight: "JX792", route: "CRK-TPE", region: "PH" },
+
+      // MY
+      { flight: "JX725", route: "TPE-KUL", region: "MY" },
+      { flight: "JX726", route: "KUL-TPE", region: "MY" },
+
+      // TH
+      { flight: "JX741", route: "TPE-BKK", region: "TH" },
+      { flight: "JX745", route: "TPE-BKK", region: "TH" },
+      { flight: "JX742", route: "BKK-TPE", region: "TH" },
+      { flight: "JX746", route: "BKK-TPE", region: "TH" },
+      { flight: "JX751", route: "TPE-CNX", region: "TH" },
+      { flight: "JX752", route: "CNX-TPE", region: "TH" },
+
+      // ID
+      { flight: "JX761", route: "TPE-CGK", region: "ID" },
+      { flight: "JX762", route: "CGK-TPE", region: "ID" },
+
+      // SG
+      { flight: "JX771", route: "TPE-SIN", region: "SG" },
+      { flight: "JX772", route: "SIN-TPE", region: "SG" },
+
+      // MO
+      { flight: "JX201", route: "TPE-MFM", region: "MO" },
+      { flight: "JX205", route: "TPE-MFM", region: "MO" },
+      { flight: "JX202", route: "MFM-TPE", region: "MO" },
+      { flight: "JX206", route: "MFM-TPE", region: "MO" },
+
+      // HK
+      { flight: "JX233", route: "TPE-HKG", region: "HK" },
+      { flight: "JX235", route: "TPE-HKG", region: "HK" },
+      { flight: "JX234", route: "HKG-TPE", region: "HK" },
+      { flight: "JX236", route: "HKG-TPE", region: "HK" },
+
+      // JP
+      { flight: "JX800", route: "TPE-NRT", region: "JP" },
+      { flight: "JX802", route: "TPE-NRT", region: "JP" },
+      { flight: "JX804", route: "TPE-NRT", region: "JP" },
+      { flight: "JX801", route: "NRT-TPE", region: "JP" },
+      { flight: "JX803", route: "NRT-TPE", region: "JP" },
+      { flight: "JX805", route: "NRT-TPE", region: "JP" },
+      { flight: "JX820", route: "TPE-KIX", region: "JP" },
+      { flight: "JX822", route: "TPE-KIX", region: "JP" },
+      { flight: "JX821", route: "KIX-TPE", region: "JP" },
+      { flight: "JX823", route: "KIX-TPE", region: "JP" },
+      { flight: "JX840", route: "TPE-FUK", region: "JP" },
+      { flight: "JX841", route: "FUK-TPE", region: "JP" },
+      { flight: "JX846", route: "TPE-KMJ", region: "JP" },
+      { flight: "JX847", route: "KMJ-TPE", region: "JP" },
+      { flight: "JX850", route: "TPE-CTS", region: "JP" },
+      { flight: "JX851", route: "CTS-TPE", region: "JP" },
+      { flight: "JX862", route: "TPE-SDJ", region: "JP" },
+      { flight: "JX863", route: "SDJ-TPE", region: "JP" },
+      { flight: "JX870", route: "TPE-OKA", region: "JP" },
+      { flight: "JX871", route: "OKA-TPE", region: "JP" },
+      { flight: "JX838", route: "TPE-NGO", region: "JP" },
+      { flight: "JX839", route: "NGO-TPE", region: "JP" },
+      { flight: "JX860", route: "TPE-HKD", region: "JP" },
+      { flight: "JX861", route: "HKD-TPE", region: "JP" },
+      { flight: "JX834", route: "TPE-UKB", region: "JP" },
+      { flight: "JX835", route: "UKB-TPE", region: "JP" },
+      { flight: "JX886", route: "TPE-SHI", region: "JP" },
+      { flight: "JX887", route: "SHI-TPE", region: "JP" },
+
+      // KR
+      { flight: "JX900", route: "TPE-PUS", region: "KR" },
+      { flight: "JX902", route: "TPE-PUS", region: "KR" },
+      { flight: "JX901", route: "PUS-TPE", region: "KR" },
+      { flight: "JX903", route: "PUS-TPE", region: "KR" },
+
+      // US
+      { flight: "JX002", route: "TPE-LAX", region: "US" },
+      { flight: "JX001", route: "LAX-TPE", region: "US" },
+      { flight: "JX010", route: "TPE-ONT", region: "US" },
+      { flight: "JX009", route: "ONT-TPE", region: "US" },
+      { flight: "JX012", route: "TPE-SFO", region: "US" },
+      { flight: "JX011", route: "SFO-TPE", region: "US" },
+      { flight: "JX026", route: "TPE-PHX", region: "US" },
+      { flight: "JX025", route: "PHX-TPE", region: "US" },
+      { flight: "JX032", route: "TPE-SEA", region: "US" },
+      { flight: "JX031", route: "SEA-TPE", region: "US" },
+
+      // CZ
+      { flight: "JX101", route: "TPE-PRG", region: "CZ" },
+      { flight: "JX102", route: "PRG-TPE", region: "CZ" },
+    ];
+
+    const STORAGE_WEAK = "jx_weak_questions";
+    const STORAGE_STATS = "jx_practice_stats";
+
+    const questionText = document.getElementById("questionText");
+    const regionText = document.getElementById("regionText");
+    const directionText = document.getElementById("directionText");
+    const answerInput = document.getElementById("answerInput");
+    const resultBox = document.getElementById("resultBox");
+    const weakList = document.getElementById("weakList");
+    const modeSelect = document.getElementById("modeSelect");
+    const regionSelect = document.getElementById("regionSelect");
+
+    const totalCount = document.getElementById("totalCount");
+    const weakCount = document.getElementById("weakCount");
+    const correctCount = document.getElementById("correctCount");
+    const wrongCount = document.getElementById("wrongCount");
+
+    let currentIndex = 0;
+    let currentPool = [];
+    let currentQuestion = null;
+
+    let stats = loadStats();
+
+    function loadWeakQuestions() {
+      return JSON.parse(localStorage.getItem(STORAGE_WEAK) || "[]");
+    }
+
+    function saveWeakQuestions(data) {
+      localStorage.setItem(STORAGE_WEAK, JSON.stringify(data));
+    }
+
+    function loadStats() {
+      return JSON.parse(localStorage.getItem(STORAGE_STATS) || '{"correct":0,"wrong":0}');
+    }
+
+    function saveStats() {
+      localStorage.setItem(STORAGE_STATS, JSON.stringify(stats));
+    }
+
+    function populateRegions() {
+      const regions = [...new Set(questionBank.map(item => item.region))];
+      regions.forEach(region => {
+        const option = document.createElement("option");
+        option.value = region;
+        option.textContent = region;
+        regionSelect.appendChild(option);
+      });
+    }
+
+    function normalizeAnswer(text) {
+      return text.trim().toUpperCase().replace(/\s+/g, "");
+    }
+
+    function getFilteredPool() {
+      const mode = modeSelect.value;
+      const region = regionSelect.value;
+      let pool = [...questionBank];
+
+      if (region !== "all") {
+        pool = pool.filter(item => item.region === region);
+      }
+
+      if (mode === "weak") {
+        const weak = loadWeakQuestions();
+        const weakFlights = weak.map(item => item.flight);
+        pool = pool.filter(item => weakFlights.includes(item.flight));
+      }
+
+      return pool;
+    }
+
+    function setQuestion(question) {
+      currentQuestion = question;
+      questionText.textContent = question.flight;
+      regionText.textContent = question.region;
+      directionText.textContent = "???";
+      answerInput.value = "";
+      answerInput.focus();
+      resultBox.className = "result";
+      resultBox.textContent = `請輸入 ${question.flight} 對應的 Route`;
+    }
+
+    function nextQuestion() {
+      currentPool = getFilteredPool();
+
+      if (!currentPool.length) {
+        currentQuestion = null;
+        questionText.textContent = "---";
+        regionText.textContent = "-";
+        directionText.textContent = "-";
+        resultBox.className = "result error";
+        resultBox.textContent = "目前這個模式沒有題目，請切回全部題庫或先加入不熟題。";
+        return;
+      }
+
+      if (currentIndex >= currentPool.length) {
+        currentIndex = 0;
+      }
+
+      setQuestion(currentPool[currentIndex]);
+      currentIndex++;
+    }
+
+    function randomQuestion() {
+      currentPool = getFilteredPool();
+
+      if (!currentPool.length) {
+        resultBox.className = "result error";
+        resultBox.textContent = "目前沒有可用題目。";
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * currentPool.length);
+      setQuestion(currentPool[randomIndex]);
+    }
+
+    function checkAnswer() {
+      if (!currentQuestion) return;
+
+      const userAnswer = normalizeAnswer(answerInput.value);
+      const correctAnswer = normalizeAnswer(currentQuestion.route);
+
+      if (!userAnswer) {
+        resultBox.className = "result error";
+        resultBox.textContent = "請先輸入答案。";
+        return;
+      }
+
+      if (userAnswer === correctAnswer) {
+        stats.correct++;
+        saveStats();
+        updateStats();
+        resultBox.className = "result success";
+        resultBox.textContent = `答對了：${currentQuestion.flight} = ${currentQuestion.route}`;
+      } else {
+        stats.wrong++;
+        saveStats();
+        updateStats();
+        resultBox.className = "result error";
+        resultBox.textContent = `答錯了。${currentQuestion.flight} 正確答案是 ${currentQuestion.route}`;
+      }
+    }
+
+    function showAnswer() {
+      if (!currentQuestion) return;
+      directionText.textContent = currentQuestion.route;
+      resultBox.className = "result";
+      resultBox.textContent = `答案：${currentQuestion.flight} = ${currentQuestion.route}`;
+    }
+
+    function addToWeak() {
+      if (!currentQuestion) return;
+
+      const weak = loadWeakQuestions();
+      const exists = weak.some(item => item.flight === currentQuestion.flight);
+
+      if (!exists) {
+        weak.push(currentQuestion);
+        saveWeakQuestions(weak);
+        renderWeakList();
+        updateStats();
+        resultBox.className = "result";
+        resultBox.textContent = `${currentQuestion.flight} 已加入不熟題庫。`;
+      } else {
+        resultBox.className = "result";
+        resultBox.textContent = `${currentQuestion.flight} 已經在不熟題庫裡了。`;
+      }
+    }
+
+    function removeWeak(flight) {
+      const weak = loadWeakQuestions().filter(item => item.flight !== flight);
+      saveWeakQuestions(weak);
+      renderWeakList();
+      updateStats();
+    }
+
+    function renderWeakList() {
+      const weak = loadWeakQuestions();
+
+      if (!weak.length) {
+        weakList.innerHTML = `<div style="color:#94a3b8;padding:12px;">目前沒有收藏不熟題目</div>`;
+        return;
+      }
+
+      weakList.innerHTML = weak.map(item => `
+        <div class="list-item">
+          <div>
+            <strong>${item.flight}</strong>
+            <small>${item.route}｜${item.region}</small>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="mini-btn secondary" onclick="loadSpecificQuestion('${item.flight}')">練這題</button>
+            <button class="mini-btn danger" onclick="removeWeak('${item.flight}')">刪除</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function loadSpecificQuestion(flight) {
+      const found = questionBank.find(item => item.flight === flight);
+      if (found) setQuestion(found);
+    }
+
+    function updateStats() {
+      totalCount.textContent = questionBank.length;
+      weakCount.textContent = loadWeakQuestions().length;
+      correctCount.textContent = stats.correct;
+      wrongCount.textContent = stats.wrong;
+    }
+
+    function clearStats() {
+      stats = { correct: 0, wrong: 0 };
+      saveStats();
+      updateStats();
+      resultBox.className = "result";
+      resultBox.textContent = "成績已清除。";
+    }
+
+    function clearWeak() {
+      if (!confirm("確定要清空不熟題庫嗎？")) return;
+      saveWeakQuestions([]);
+      renderWeakList();
+      updateStats();
+      resultBox.className = "result";
+      resultBox.textContent = "不熟題庫已清空。";
+    }
+
+    document.getElementById("checkBtn").addEventListener("click", checkAnswer);
+    document.getElementById("nextBtn").addEventListener("click", nextQuestion);
+    document.getElementById("randomBtn").addEventListener("click", randomQuestion);
+    document.getElementById("showBtn").addEventListener("click", showAnswer);
+    document.getElementById("addWeakBtn").addEventListener("click", addToWeak);
+    document.getElementById("clearStatsBtn").addEventListener("click", clearStats);
+    document.getElementById("clearWeakBtn").addEventListener("click", clearWeak);
+
+    modeSelect.addEventListener("change", () => {
+      currentIndex = 0;
+      nextQuestion();
+    });
+
+    regionSelect.addEventListener("change", () => {
+      currentIndex = 0;
+      nextQuestion();
+    });
+
+    answerInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") checkAnswer();
+    });
+
+    populateRegions();
+    renderWeakList();
+    updateStats();
+    nextQuestion();
+
+    window.removeWeak = removeWeak;
+    window.loadSpecificQuestion = loadSpecificQuestion;
+  </script>
+</body>
+</html>
