@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>真實快捷鍵辨識器</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      padding: 32px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .desc {
+      text-align: center;
+      color: #cbd5e1;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.06);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .label {
+      color: #93c5fd;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .big-text {
+      font-size: 28px;
+      font-weight: bold;
+      word-break: break-word;
+    }
+
+    .result-ok {
+      color: #86efac;
+    }
+
+    .result-fail {
+      color: #fca5a5;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 14px 20px;
+      border: none;
+      border-radius: 12px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .listen-box {
+      border: 2px dashed rgba(255,255,255,0.25);
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+      background: rgba(255,255,255,0.04);
+      margin-bottom: 20px;
+    }
+
+    .listen-box.active {
+      border-color: #60a5fa;
+      background: rgba(96,165,250,0.12);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      text-align: left;
+    }
+
+    th {
+      background: rgba(37,99,235,0.28);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .hint {
+      margin-top: 14px;
+      color: #cbd5e1;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    @media (max-width: 640px) {
+      .big-text {
+        font-size: 22px;
+      }
+
+      .container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>真實快捷鍵辨識器</h1>
+    <p class="desc">
+      點擊下方區塊後，直接用鍵盤輸入真實快捷鍵序列。<br>
+      例如先按 <b>Alt + F11</b>，再按 <b>F9</b>，系統會辨識為 <b>AF11&gt;F9</b>。
+    </p>
+
+    <div id="listenBox" class="listen-box" tabindex="0">
+      <div class="label">偵測區</div>
+      <div class="big-text">點我後開始按快捷鍵</div>
+    </div>
+
+    <div class="controls">
+      <button id="clearBtn">清除目前序列</button>
+      <button id="finishBtn">完成比對</button>
+    </div>
+
+    <div class="panel">
+      <div class="label">目前輸入序列</div>
+      <div id="sequenceText" class="big-text">尚未輸入</div>
+    </div>
+
+    <div class="panel">
+      <div class="label">辨識結果</div>
+      <div id="resultText" class="big-text">尚未比對</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Customer Application</th>
+          <th>Combination Keys</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <div class="hint">
+      規則：<br>
+      A = Alt、C = Ctrl、S = Shift<br>
+      AF11 = Alt + F11、CF4 = Ctrl + F4、SF4 = Shift + F4<br><br>
+      提醒：某些快捷鍵可能會被瀏覽器或系統攔截，所以不是每一組都一定能抓到。
+    </div>
+  </div>
+
+  <script>
+    const shortcutMap = {
+      "F7>CF4>F4": "View Booking",
+      "AF11>F9": "Allocate Seat",
+      "SF4": "Add FQTV",
+      "F7>CF4>F3": "Add Comment",
+      "F11": "Add Bags",
+      "SF9": "Add Service",
+      "AF10>SF4": "Boarding Pass Printing",
+      "F7>CF4>SF3": "View History",
+      "CF8>CF8": "Add or Amend Travel Document",
+      "AF3>F9": "Display Baggage",
+      "F6": "Cancel Acceptance",
+      "AF12>F6": "Cancel Acceptance"
+    };
+
+    const tableData = [
+      ["View Booking", "F7>CF4>F4"],
+      ["Allocate Seat", "AF11>F9"],
+      ["Add FQTV", "SF4"],
+      ["Add Comment", "F7>CF4>F3"],
+      ["Add Bags", "F11"],
+      ["Add Service", "SF9"],
+      ["Boarding Pass Printing", "AF10>SF4"],
+      ["View History", "F7>CF4>SF3"],
+      ["Add or Amend Travel Document", "CF8>CF8"],
+      ["Display Baggage", "AF3>F9"],
+      ["Cancel Acceptance", "F6 or AF12>F6"]
+    ];
+
+    const listenBox = document.getElementById("listenBox");
+    const sequenceText = document.getElementById("sequenceText");
+    const resultText = document.getElementById("resultText");
+    const clearBtn = document.getElementById("clearBtn");
+    const finishBtn = document.getElementById("finishBtn");
+    const tableBody = document.getElementById("tableBody");
+
+    let sequence = [];
+    let lastKeyTime = 0;
+
+    function renderTable() {
+      tableBody.innerHTML = tableData.map(([name, key]) => `
+        <tr>
+          <td>${name}</td>
+          <td>${key}</td>
+        </tr>
+      `).join("");
+    }
+
+    function normalizeStep(step) {
+      return step.toUpperCase().replace(/\s+/g, "");
+    }
+
+    function updateSequenceUI() {
+      sequenceText.textContent = sequence.length ? sequence.join(" > ") : "尚未輸入";
+    }
+
+    function clearSequence() {
+      sequence = [];
+      updateSequenceUI();
+      resultText.textContent = "尚未比對";
+      resultText.className = "big-text";
+    }
+
+    function finishMatch() {
+      const key = sequence.map(normalizeStep).join(">");
+      const result = shortcutMap[key];
+
+      if (result) {
+        resultText.textContent = result;
+        resultText.className = "big-text result-ok";
+      } else if (sequence.length === 0) {
+        resultText.textContent = "請先輸入快捷鍵";
+        resultText.className = "big-text";
+      } else {
+        resultText.textContent = "查無對應名稱";
+        resultText.className = "big-text result-fail";
+      }
+    }
+
+    function getStepFromEvent(e) {
+      const key = e.key;
+
+      // 忽略單獨按修飾鍵
+      if (key === "Shift" || key === "Control" || key === "Alt" || key === "Meta") {
+        return null;
+      }
+
+      let baseKey = "";
+
+      if (/^F\d{1,2}$/i.test(key)) {
+        baseKey = key.toUpperCase();
+      } else if (key.length === 1) {
+        baseKey = key.toUpperCase();
+      } else {
+        baseKey = key.toUpperCase();
+      }
+
+      let prefix = "";
+      if (e.altKey) prefix += "A";
+      if (e.ctrlKey) prefix += "C";
+      if (e.shiftKey) prefix += "S";
+
+      return `${prefix}${baseKey}`;
+    }
+
+    listenBox.addEventListener("focus", () => {
+      listenBox.classList.add("active");
+    });
+
+    listenBox.addEventListener("blur", () => {
+      listenBox.classList.remove("active");
+    });
+
+    listenBox.addEventListener("keydown", (e) => {
+      e.preventDefault();
+
+      const now = Date.now();
+      const step = getStepFromEvent(e);
+
+      if (!step) return;
+
+      // 避免長按重複輸入同一鍵
+      if (e.repeat) return;
+
+      // 可依需求設定：超過 3 秒視為新一輪
+      if (now - lastKeyTime > 3000) {
+        sequence = [];
+      }
+
+      lastKeyTime = now;
+      sequence.push(step);
+      updateSequenceUI();
+    });
+
+    clearBtn.addEventListener("click", clearSequence);
+    finishBtn.addEventListener("click", finishMatch);
+
+    renderTable();
+  </script>
+</body>
+</html>
