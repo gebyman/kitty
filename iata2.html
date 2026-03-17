@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IATA 記憶練習</title>
+  <style>
+    :root {
+      --bg: #f4f0e6;
+      --panel: #fffdf8;
+      --line: #d4c6a0;
+      --main: #8a7341;
+      --main-dark: #6b582f;
+      --text: #2f2b22;
+      --muted: #746d5d;
+      --ok: #1f7a39;
+      --bad: #b42318;
+      --tag: #efe6cf;
+      --shadow: 0 12px 28px rgba(70, 52, 16, 0.12);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      min-height: 100vh;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      padding: 18px;
+      position: sticky;
+      top: 16px;
+      height: calc(100vh - 32px);
+      overflow: auto;
+    }
+
+    .brand {
+      margin-bottom: 18px;
+    }
+
+    .brand h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      color: var(--main-dark);
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--main-dark);
+      margin: 18px 0 10px;
+    }
+
+    .country-list,
+    .fav-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      transition: 0.2s ease;
+      font-family: inherit;
+    }
+
+    .chip,
+    .sub-chip {
+      background: var(--tag);
+      color: var(--main-dark);
+      border: 1px solid #dacba4;
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .chip:hover,
+    .sub-chip:hover,
+    .ghost:hover,
+    .action:hover,
+    .list-btn:hover,
+    .small-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(0.98);
+    }
+
+    .chip.active,
+    .sub-chip.active {
+      background: var(--main);
+      color: white;
+      border-color: var(--main);
+    }
+
+    .main {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .stat {
+      background: #f8f3e8;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 14px;
+      min-width: 110px;
+    }
+
+    .stat .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .stat .value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--main-dark);
+    }
+
+    .card {
+      background: linear-gradient(180deg, #fffefb 0%, #fcf7ef 100%);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 26px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+
+    .mode-row,
+    .action-row,
+    .bottom-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .ghost,
+    .action,
+    .small-btn,
+    .list-btn {
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .ghost,
+    .list-btn {
+      background: #f6efdf;
+      color: var(--main-dark);
+      border: 1px solid var(--line);
+    }
+
+    .action {
+      background: var(--main);
+      color: white;
+    }
+
+    .small-btn {
+      background: #fff;
+      color: var(--main-dark);
+      border: 1px solid var(--line);
+    }
+
+    .question-box {
+      margin-top: 22px;
+      padding: 26px;
+      border-radius: 20px;
+      background: #fff;
+      border: 1px solid #eadcba;
+    }
+
+    .question-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .question {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 900;
+      color: var(--main-dark);
+      line-height: 1.2;
+      letter-spacing: 0.3px;
+    }
+
+    .subinfo {
+      margin-top: 10px;
+      font-size: 15px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .answer-area {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      border: 2px solid #d8c79e;
+      border-radius: 16px;
+      padding: 16px 18px;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--main-dark);
+      text-transform: uppercase;
+      background: #fffefb;
+      outline: none;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--main);
+      box-shadow: 0 0 0 4px rgba(138, 115, 65, 0.12);
+    }
+
+    .message {
+      margin-top: 14px;
+      min-height: 28px;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .message.ok { color: var(--ok); }
+    .message.bad { color: var(--bad); }
+    .message.info { color: var(--main-dark); }
+
+    .favorite-board {
+      padding: 22px;
+    }
+
+    .favorite-groups {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .country-box {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: #fffefb;
+    }
+
+    .country-box h3 {
+      margin: 0 0 10px;
+      color: var(--main-dark);
+      font-size: 16px;
+    }
+
+    .country-item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 250px;
+      overflow: auto;
+    }
+
+    .list-btn {
+      text-align: left;
+      width: 100%;
+      line-height: 1.35;
+    }
+
+    .list-btn .meta {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+      padding: 0 4px;
+    }
+
+    @media (max-width: 1100px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+      .favorite-groups {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app { padding: 14px; }
+      .main, .sidebar { padding: 16px; }
+      .answer-area { grid-template-columns: 1fr; }
+      .question-box { padding: 18px; }
+      .card { padding: 18px; }
+      .question { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel sidebar">
+      <div class="brand">
+        <h1>IATA 練習網</h1>
+        <p>依照國家分類練習機場 IATA。題目格式為「城市(英文) + ICAO」，你要填入正確的 IATA。</p>
+      </div>
+
+      <div class="section-title">國家分類</div>
+      <div id="countryList" class="country-list"></div>
+
+      <div class="section-title">模式</div>
+      <div class="fav-list">
+        <button class="sub-chip active" data-mode="all">全部題目</button>
+        <button class="sub-chip" data-mode="favorites">只練不熟題</button>
+      </div>
+
+      <div class="section-title">不熟題目數</div>
+      <div id="favoriteCount" class="empty">0 題</div>
+
+      <div class="section-title">說明</div>
+      <div class="footer-note">
+        答對後會自動跳下一題。<br>
+        答錯時會直接顯示正解。<br>
+        你可以把不熟的題目加入收藏，之後點選複習。
+      </div>
+    </aside>
+
+    <main class="panel main">
+      <div class="topbar">
+        <div class="stats">
+          <div class="stat">
+            <div class="label">目前國家</div>
+            <div id="statCountry" class="value">全部</div>
+          </div>
+          <div class="stat">
+            <div class="label">目前模式</div>
+            <div id="statMode" class="value">全部</div>
+          </div>
+          <div class="stat">
+            <div class="label">題庫數量</div>
+            <div id="statCount" class="value">0</div>
+          </div>
+        </div>
+
+        <div class="mode-row">
+          <button id="randomBtn" class="ghost">隨機下一題</button>
+          <button id="clearFavBtn" class="ghost">清空不熟題</button>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="action-row">
+          <button id="showAnswerBtn" class="small-btn">顯示答案</button>
+          <button id="toggleFavoriteBtn" class="small-btn">加入不熟題</button>
+          <button id="nextBtn" class="small-btn">下一題</button>
+        </div>
+
+        <div class="question-box">
+          <div class="question-label">請輸入 IATA</div>
+          <div id="questionText" class="question">載入中...</div>
+          <div id="subInfo" class="subinfo"></div>
+
+          <div class="answer-area">
+            <input id="answerInput" type="text" maxlength="3" placeholder="例如 TPE" autocomplete="off" />
+            <button id="submitBtn" class="action">送出答案</button>
+          </div>
+
+          <div id="message" class="message info"></div>
+        </div>
+      </section>
+
+      <section class="panel favorite-board">
+        <div class="section-title" style="margin-top: 0;">不熟題複習區</div>
+        <div id="favoriteBoard" class="favorite-groups"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const airportData = [
+      { country: 'TW', cityCh: '桃園', cityEn: 'Taoyuan', iata: 'TPE', icao: 'RCTP' },
+      { country: 'TW', cityCh: '台北', cityEn: 'Taipei', iata: 'TSA', icao: 'RCSS' },
+      { country: 'TW', cityCh: '高雄', cityEn: 'Kaohsiung', iata: 'KHH', icao: 'RCKH' },
+      { country: 'TW', cityCh: '台中', cityEn: 'Taichung', iata: 'RMQ', icao: 'RCMQ' },
+      { country: 'MO', cityCh: '澳門', cityEn: 'Macao', iata: 'MFM', icao: 'VMMC' },
+      { country: 'HK', cityCh: '香港', cityEn: 'Hong Kong', iata: 'HKG', icao: 'VHHH' },
+      { country: 'US', cityCh: '洛杉磯', cityEn: 'Los Angeles', iata: 'LAX', icao: 'KLAX' },
+      { country: 'US', cityCh: '安大略', cityEn: 'Ontario', iata: 'ONT', icao: 'KONT' },
+      { country: 'US', cityCh: '舊金山', cityEn: 'San Francisco', iata: 'SFO', icao: 'KSFO' },
+      { country: 'US', cityCh: '紐約', cityEn: 'New York', iata: 'JFK', icao: 'KJFK' },
+      { country: 'US', cityCh: '紐約', cityEn: 'New York', iata: 'EWR', icao: 'KEWR' },
+      { country: 'US', cityCh: '紐約', cityEn: 'New York', iata: 'LGA', icao: 'KLGA' },
+      { country: 'US', cityCh: '華盛頓', cityEn: 'Washington', iata: 'IAD', icao: 'KIAD' },
+      { country: 'US', cityCh: '西雅圖', cityEn: 'Seattle', iata: 'SEA', icao: 'KSEA' },
+      { country: 'US', cityCh: '鳳凰城', cityEn: 'Phoenix', iata: 'PHX', icao: 'KPHX' },
+      { country: 'US', cityCh: '關島', cityEn: 'Guam', iata: 'GUM', icao: 'PGUM' },
+      { country: 'DE', cityCh: '法蘭克福', cityEn: 'Frankfurt', iata: 'FRA', icao: 'EDDF' },
+      { country: 'DE', cityCh: '柏林', cityEn: 'Berlin', iata: 'BER', icao: 'EDDB' },
+      { country: 'NL', cityCh: '阿姆斯特丹', cityEn: 'Amsterdam', iata: 'AMS', icao: 'EHAM' },
+      { country: 'FR', cityCh: '巴黎', cityEn: 'Paris', iata: 'CDG', icao: 'LFPG' },
+      { country: 'ES', cityCh: '馬德里', cityEn: 'Madrid', iata: 'MAD', icao: 'LEMD' },
+      { country: 'ES', cityCh: '巴塞隆納', cityEn: 'Barcelona', iata: 'BCN', icao: 'LEBL' },
+      { country: 'IT', cityCh: '羅馬', cityEn: 'Rome', iata: 'FCO', icao: 'LIRF' },
+      { country: 'IT', cityCh: '米蘭', cityEn: 'Milan', iata: 'MXP', icao: 'LIMC' },
+      { country: 'TH', cityCh: '曼谷', cityEn: 'Bangkok', iata: 'BKK', icao: 'VTBS' },
+      { country: 'TH', cityCh: '廊曼', cityEn: 'Bangkok', iata: 'DMK', icao: 'VTBD' },
+      { country: 'TH', cityCh: '清邁', cityEn: 'Chiang Mai', iata: 'CNX', icao: 'VTCC' },
+      { country: 'TH', cityCh: '普吉島', cityEn: 'Phuket', iata: 'HKT', icao: 'VTSP' },
+      { country: 'VN', cityCh: '峴港', cityEn: 'Da Nang', iata: 'DAD', icao: 'VVDN' },
+      { country: 'VN', cityCh: '胡志明', cityEn: 'Ho Chi Minh', iata: 'SGN', icao: 'VVTS' },
+      { country: 'VN', cityCh: '河內', cityEn: 'Hanoi', iata: 'HAN', icao: 'VVNB' },
+      { country: 'VN', cityCh: '富國島', cityEn: 'Phu Quoc Island', iata: 'PQC', icao: 'VVPQ' },
+      { country: 'PH', cityCh: '宿霧', cityEn: 'Cebu', iata: 'CEB', icao: 'RPVM' },
+      { country: 'PH', cityCh: '克拉克', cityEn: 'Clark', iata: 'CRK', icao: 'RPLC' },
+      { country: 'PH', cityCh: '卡利博', cityEn: 'Kalibo', iata: 'KLO', icao: 'RPVK' },
+      { country: 'PH', cityCh: '馬尼拉', cityEn: 'Manila', iata: 'MNL', icao: 'RPLL' },
+      { country: 'MY', cityCh: '檳城', cityEn: 'Penang', iata: 'PEN', icao: 'WMKP' },
+      { country: 'MY', cityCh: '吉隆坡', cityEn: 'Kuala Lumpur', iata: 'KUL', icao: 'WMKK' },
+      { country: 'SG', cityCh: '新加坡', cityEn: 'Singapore', iata: 'SIN', icao: 'WSSS' },
+      { country: 'ID', cityCh: '雅加達', cityEn: 'Jakarta', iata: 'CGK', icao: 'WIII' },
+      { country: 'ID', cityCh: '峇里島', cityEn: 'Denpasar Bali', iata: 'DPS', icao: 'WADD' },
+      { country: 'GB', cityCh: '倫敦', cityEn: 'London', iata: 'LHR', icao: 'EGLL' },
+      { country: 'GB', cityCh: '倫敦', cityEn: 'London', iata: 'LGW', icao: 'EGKK' },
+      { country: 'GB', cityCh: '倫敦', cityEn: 'London', iata: 'STN', icao: 'EGSS' },
+      { country: 'GB', cityCh: '倫敦', cityEn: 'London', iata: 'LTN', icao: 'EGGW' },
+      { country: 'GB', cityCh: '倫敦', cityEn: 'London', iata: 'LCY', icao: 'EGLC' },
+      { country: 'JP', cityCh: '福岡', cityEn: 'Fukuoka', iata: 'FUK', icao: 'RJFF' },
+      { country: 'JP', cityCh: '沖繩', cityEn: 'Okinawa', iata: 'OKA', icao: 'ROAH' },
+      { country: 'JP', cityCh: '大阪', cityEn: 'Osaka', iata: 'KIX', icao: 'RJBB' },
+      { country: 'JP', cityCh: '仙台', cityEn: 'Sendai', iata: 'SDJ', icao: 'RJSS' },
+      { country: 'JP', cityCh: '札幌', cityEn: 'Sapporo', iata: 'CTS', icao: 'RJCC' },
+      { country: 'JP', cityCh: '函館', cityEn: 'Hakodate', iata: 'HKD', icao: 'RJCH' },
+      { country: 'JP', cityCh: '熊本', cityEn: 'Kumamoto', iata: 'KMJ', icao: 'RJFT' },
+      { country: 'JP', cityCh: '東京 成田', cityEn: 'Tokyo', iata: 'NRT', icao: 'RJAA' },
+      { country: 'JP', cityCh: '東京 羽田', cityEn: 'Tokyo', iata: 'HND', icao: 'RJTT' },
+      { country: 'JP', cityCh: '名古屋', cityEn: 'Nagoya', iata: 'NGO', icao: 'RJGG' },
+      { country: 'JP', cityCh: '德島', cityEn: 'Tokushima', iata: 'TKS', icao: 'RJOS' },
+      { country: 'JP', cityCh: '高松', cityEn: 'Takamatsu', iata: 'TAK', icao: 'RJOT' },
+      { country: 'JP', cityCh: '神戶', cityEn: 'Kobe', iata: 'UKB', icao: 'RJBE' },
+      { country: 'JP', cityCh: '下地島', cityEn: 'Shimojishima', iata: 'SHI', icao: 'RORS' },
+      { country: 'JP', cityCh: '廣島', cityEn: 'Hiroshima', iata: 'HIJ', icao: 'RJOA' },
+      { country: 'KR', cityCh: '首爾', cityEn: 'Seoul', iata: 'ICN', icao: 'RKSI' },
+      { country: 'KR', cityCh: '首爾', cityEn: 'Seoul', iata: 'GMP', icao: 'RKSS' },
+      { country: 'KR', cityCh: '釜山', cityEn: 'Busan', iata: 'PUS', icao: 'RKPK' },
+      { country: 'KR', cityCh: '濟州島', cityEn: 'Jeju', iata: 'CJU', icao: 'RKPC' },
+      { country: 'CN', cityCh: '北京', cityEn: 'Beijing', iata: 'PEK', icao: 'ZBAA' },
+      { country: 'CN', cityCh: '北京', cityEn: 'Beijing', iata: 'PKX', icao: 'ZBAD' },
+      { country: 'CN', cityCh: '上海', cityEn: 'Shanghai', iata: 'PVG', icao: 'ZSPD' },
+      { country: 'CN', cityCh: '上海', cityEn: 'Shanghai', iata: 'SHA', icao: 'ZSSS' },
+      { country: 'CN', cityCh: '廣州', cityEn: 'Guangzhou', iata: 'CAN', icao: 'ZGGG' },
+      { country: 'CN', cityCh: '深圳', cityEn: 'Shenzhen', iata: 'SZX', icao: 'ZGSZ' },
+      { country: 'AE', cityCh: '阿布達比', cityEn: 'Abu Dhabi', iata: 'AUH', icao: 'OMAA' }
+    ];
+
+    const STORAGE_KEY = 'iata-favorites-v1';
+
+    const state = {
+      selectedCountry: 'ALL',
+      mode: 'all',
+      favorites: loadFavorites(),
+      currentPool: [],
+      currentQuestion: null,
+      currentIndex: -1
+    };
+
+    const countryList = document.getElementById('countryList');
+    const favoriteCount = document.getElementById('favoriteCount');
+    const questionText = document.getElementById('questionText');
+    const subInfo = document.getElementById('subInfo');
+    const answerInput = document.getElementById('answerInput');
+    const message = document.getElementById('message');
+    const favoriteBoard = document.getElementById('favoriteBoard');
+    const statCountry = document.getElementById('statCountry');
+    const statMode = document.getElementById('statMode');
+    const statCount = document.getElementById('statCount');
+    const toggleFavoriteBtn = document.getElementById('toggleFavoriteBtn');
+
+    function getKey(item) {
+      return `${item.country}|${item.cityCh}|${item.cityEn}|${item.iata}|${item.icao}`;
+    }
+
+    function loadFavorites() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveFavorites() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.favorites));
+    }
+
+    function uniqueCountries() {
+      return ['ALL', ...new Set(airportData.map(item => item.country))];
+    }
+
+    function renderCountries() {
+      countryList.innerHTML = '';
+      uniqueCountries().forEach(country => {
+        const btn = document.createElement('button');
+        btn.className = `chip ${state.selectedCountry === country ? 'active' : ''}`;
+        btn.textContent = country === 'ALL' ? '全部' : country;
+        btn.addEventListener('click', () => {
+          state.selectedCountry = country;
+          refreshPool();
+          renderCountries();
+        });
+        countryList.appendChild(btn);
+      });
+    }
+
+    function getFilteredPool() {
+      let pool = [...airportData];
+      if (state.selectedCountry !== 'ALL') {
+        pool = pool.filter(item => item.country === state.selectedCountry);
+      }
+      if (state.mode === 'favorites') {
+        pool = pool.filter(item => state.favorites.includes(getKey(item)));
+      }
+      return pool;
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function refreshPool() {
+      state.currentPool = shuffle(getFilteredPool());
+      state.currentIndex = -1;
+      updateStats();
+      nextQuestion();
+      renderFavoriteBoard();
+      updateFavoriteCount();
+    }
+
+    function updateStats() {
+      statCountry.textContent = state.selectedCountry === 'ALL' ? '全部' : state.selectedCountry;
+      statMode.textContent = state.mode === 'all' ? '全部' : '不熟題';
+      statCount.textContent = String(state.currentPool.length);
+    }
+
+    function updateFavoriteCount() {
+      favoriteCount.textContent = `${state.favorites.length} 題`;
+    }
+
+    function nextQuestion(random = false) {
+      if (!state.currentPool.length) {
+        state.currentQuestion = null;
+        questionText.textContent = '目前沒有題目';
+        subInfo.innerHTML = '請切換國家，或先把題目加入不熟題。';
+        message.className = 'message info';
+        message.textContent = '沒有可練習的題目。';
+        answerInput.value = '';
+        updateFavoriteButton();
+        return;
+      }
+
+      if (random) {
+        state.currentIndex = Math.floor(Math.random() * state.currentPool.length);
+      } else {
+        state.currentIndex = (state.currentIndex + 1) % state.currentPool.length;
+      }
+
+      state.currentQuestion = state.currentPool[state.currentIndex];
+      answerInput.value = '';
+      message.className = 'message info';
+      message.textContent = '請輸入三碼 IATA。';
+      renderQuestion();
+      updateFavoriteButton();
+      answerInput.focus();
+    }
+
+    function renderQuestion() {
+      const q = state.currentQuestion;
+      if (!q) return;
+      questionText.textContent = `${q.cityCh} (${q.cityEn}) ${q.icao}`;
+      subInfo.innerHTML = `<span>Country：${q.country}</span><span>請回答：IATA</span>`;
+    }
+
+    function isFavorite(item) {
+      return state.favorites.includes(getKey(item));
+    }
+
+    function updateFavoriteButton() {
+      if (!state.currentQuestion) {
+        toggleFavoriteBtn.textContent = '加入不熟題';
+        return;
+      }
+      toggleFavoriteBtn.textContent = isFavorite(state.currentQuestion) ? '移除不熟題' : '加入不熟題';
+    }
+
+    function toggleFavorite() {
+      if (!state.currentQuestion) return;
+      const key = getKey(state.currentQuestion);
+      if (state.favorites.includes(key)) {
+        state.favorites = state.favorites.filter(item => item !== key);
+        message.className = 'message info';
+        message.textContent = '已從不熟題移除。';
+      } else {
+        state.favorites.push(key);
+        message.className = 'message info';
+        message.textContent = '已加入不熟題。';
+      }
+      saveFavorites();
+      updateFavoriteButton();
+      renderFavoriteBoard();
+      updateFavoriteCount();
+      if (state.mode === 'favorites') {
+        refreshPool();
+      }
+    }
+
+    function submitAnswer() {
+      if (!state.currentQuestion) return;
+      const userAnswer = answerInput.value.trim().toUpperCase();
+      const correct = state.currentQuestion.iata.toUpperCase();
+
+      if (!userAnswer) {
+        message.className = 'message bad';
+        message.textContent = '請先輸入答案。';
+        return;
+      }
+
+      if (userAnswer === correct) {
+        message.className = 'message ok';
+        message.textContent = `答對了，正確答案是 ${correct}，即將進入下一題。`;
+        setTimeout(() => nextQuestion(false), 700);
+      } else {
+        message.className = 'message bad';
+        message.textContent = `答錯了，你輸入 ${userAnswer}，正確答案是 ${correct}。`;
+      }
+    }
+
+    function showAnswer() {
+      if (!state.currentQuestion) return;
+      message.className = 'message info';
+      message.textContent = `答案：${state.currentQuestion.iata}`;
+      answerInput.focus();
+    }
+
+    function renderFavoriteBoard() {
+      const favoriteItems = airportData.filter(item => state.favorites.includes(getKey(item)));
+      if (!favoriteItems.length) {
+        favoriteBoard.innerHTML = `<div class="empty">目前還沒有加入不熟題。答題時按「加入不熟題」，之後就能點選該題快速複習。</div>`;
+        return;
+      }
+
+      const groups = favoriteItems.reduce((acc, item) => {
+        if (!acc[item.country]) acc[item.country] = [];
+        acc[item.country].push(item);
+        return acc;
+      }, {});
+
+      favoriteBoard.innerHTML = Object.entries(groups)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([country, items]) => `
+          <div class="country-box">
+            <h3>${country}</h3>
+            <div class="country-item-list">
+              ${items.map(item => `
+                <button class="list-btn" data-key="${getKey(item)}">
+                  ${item.cityCh} (${item.cityEn}) ${item.icao}
+                  <span class="meta">答案：${item.iata}</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `).join('');
+
+      favoriteBoard.querySelectorAll('.list-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.key;
+          const target = airportData.find(item => getKey(item) === key);
+          if (!target) return;
+          state.currentQuestion = target;
+          renderQuestion();
+          answerInput.value = '';
+          message.className = 'message info';
+          message.textContent = '已切換到你選擇的複習題。';
+          updateFavoriteButton();
+          answerInput.focus();
+        });
+      });
+    }
+
+    function clearFavorites() {
+      if (!confirm('確定要清空全部不熟題嗎？')) return;
+      state.favorites = [];
+      saveFavorites();
+      renderFavoriteBoard();
+      updateFavoriteCount();
+      updateFavoriteButton();
+      if (state.mode === 'favorites') {
+        refreshPool();
+      } else {
+        message.className = 'message info';
+        message.textContent = '已清空不熟題。';
+      }
+    }
+
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-mode]').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+        state.mode = btn.dataset.mode;
+        refreshPool();
+      });
+    });
+
+    document.getElementById('submitBtn').addEventListener('click', submitAnswer);
+    document.getElementById('showAnswerBtn').addEventListener('click', showAnswer);
+    document.getElementById('toggleFavoriteBtn').addEventListener('click', toggleFavorite);
+    document.getElementById('nextBtn').addEventListener('click', () => nextQuestion(false));
+    document.getElementById('randomBtn').addEventListener('click', () => nextQuestion(true));
+    document.getElementById('clearFavBtn').addEventListener('click', clearFavorites);
+
+    answerInput.addEventListener('input', e => {
+      e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 3);
+    });
+
+    answerInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitAnswer();
+    });
+
+    renderCountries();
+    refreshPool();
+  </script>
+</body>
+</html>
